@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Daniel · Creator Outreach</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#overview"><span class="monogram">D.</span><span>Daniel<span class="brand-sub">CREATOR OUTREACH</span></span></a>
+    <nav aria-label="Navegação"><a href="#overview">Visão geral</a><a href="#prospects">Canais e propostas</a><a href="#rules">Regras da automação</a><a href="#integrations">Integrações</a><a href="#history">Respostas e bloqueios</a></nav>
+    <div class="sidebar-bottom"><span class="dot"></span> Modo de simulação<p>Nenhum e-mail real é enviado.</p></div>
+  </aside>
+  <main>
+    <header><span class="eyebrow">MINECRAFT & ROBLOX / ENGLISH CREATORS</span><span class="badge">DRY-RUN</span></header>
+    <section id="overview">
+      <div class="title-row"><div><h1>Seu próximo projeto<br>começa com uma conversa.</h1><p class="muted">Descubra criadores, avalie oportunidades e prepare propostas com contexto.</p></div><div class="schedule"><span class="dot"></span> Agenda configurada<strong>09:00</strong><small>America/Fortaleza · ativação pendente no GitHub</small></div></div>
+      <div id="connection" class="notice" hidden><form id="auth-form"><label>Token de acesso <input id="auth-token" type="password" autocomplete="off" required></label><button>Conectar</button></form></div>
+      <div id="notice" class="notice" role="status" hidden></div>
+      <div id="stats" class="stats" aria-live="polite"></div>
+      <div class="panel discover"><div><span class="eyebrow">01 / DESCOBERTA</span><h2>Encontre sua próxima oportunidade</h2><p id="daily-progress" class="muted">Carregando histórico…</p></div><form id="discover-form"><label>Termo adicional <input name="query" placeholder="Ex.: hardcore, challenges" maxlength="120"></label><label>Máximo de canais <input name="maxResults" type="number" min="1" max="100" value="20" required></label><button type="submit">Pesquisar canais <span aria-hidden="true">↗</span></button></form></div>
+    </section>
+    <section id="prospects"><div class="section-heading"><div><span class="eyebrow">02 / PIPELINE</span><h2>Canais e propostas</h2></div><button id="refresh" class="secondary">Atualizar</button></div><div class="toolbar"><label>Pesquisa salva<select id="campaign-select" aria-label="Pesquisa salva"></select></label><label>Exibir<select id="lead-filter"><option value="all">Todos os canais</option><option value="qualified">Qualificados</option><option value="pending">Pendentes</option><option value="simulated">Simulados</option></select></label><button id="simulate">Simular contatos elegíveis</button></div><p id="campaign-notes" class="muted"></p><div id="leads" class="lead-list"></div></section>
+    <section id="rules"><div class="section-heading"><div><span class="eyebrow">03 / CRITÉRIOS</span><h2>Regras da automação</h2></div><span class="badge light">Envio real bloqueado</span></div><form id="rules-form" class="panel"><div id="rule-inputs" class="form-grid"></div><h3>Pesos da qualificação · total 100</h3><div id="weight-inputs" class="form-grid"></div><p class="muted">A faixa de inscritos prioriza canais, sem excluir automaticamente os menores. País BR e conteúdo fora do inglês são excluídos. Edição só recebe pontos com revisão e evidência. Mudanças de pesos serão aplicadas nas novas pesquisas e na próxima simulação.</p><label class="check"><input type="checkbox" name="complianceReviewed"> Revisei conformidade, qualidade das mensagens e reputação da conta para aumentar o limite.</label><button>Salvar regras</button></form></section>
+    <section id="integrations"><div class="section-heading"><div><span class="eyebrow">04 / CONEXÕES</span><h2>Integrações</h2></div></div><div id="integration-cards" class="integration-grid"></div><p class="muted">Configuração presente não significa credencial validada. Gmail está preparado para rascunhos e consulta de respostas; o envio real não está disponível nesta versão. O agendamento requer configuração e ativação no GitHub.</p></section>
+    <section id="history"><div class="section-heading"><div><span class="eyebrow">05 / HISTÓRICO</span><h2>Respostas e bloqueios</h2></div></div><div class="panel"><p class="muted">Registre respostas na ficha do canal. Recusas e descadastros bloqueiam o endereço globalmente. Follow-ups estão desativados.</p><form id="block-form" class="inline-form"><label>Não contatar <input name="email" type="email" placeholder="business@creator.com" required></label><button class="secondary">Bloquear endereço</button></form><div id="blocks"></div></div><h3>Erros recentes</h3><div id="errors" class="panel"></div></section>
+    <footer>Daniel · Freelance video editor <span>Uma abordagem por criador. Sem promessas inventadas.</span></footer>
+  </main>
+</body>
+</html>
