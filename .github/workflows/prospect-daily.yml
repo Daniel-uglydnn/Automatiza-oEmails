@@ -1,0 +1,29 @@
+name: Prospecção diária (somente simulação)
+on:
+  schedule:
+    - cron: '0 12 * * *' # 09:00 America/Fortaleza (UTC-3)
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: daily-prospecting
+  cancel-in-progress: false
+jobs:
+  discover:
+    if: vars.AUTOMATION_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      APP_MODE: live
+      STORAGE_DRIVER: supabase
+      YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run prospect -- --scheduled --simulate --max 100
