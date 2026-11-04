@@ -1,33 +1,307 @@
 <!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
-  <title>Daniel · Creator Outreach</title>
-  <link rel="stylesheet" href="/styles.css">
-  <script defer src="/app.js"></script>
-</head>
-<body>
-  <aside class="sidebar">
-    <a class="brand" href="#overview"><span class="monogram">D.</span><span>Daniel<span class="brand-sub">CREATOR OUTREACH</span></span></a>
-    <nav aria-label="Navegação"><a href="#overview">Visão geral</a><a href="#prospects">Canais e propostas</a><a href="#rules">Regras da automação</a><a href="#integrations">Integrações</a><a href="#history">Respostas e bloqueios</a></nav>
-    <div class="sidebar-bottom"><span class="dot"></span> Modo de simulação<p>Nenhum e-mail real é enviado.</p></div>
-  </aside>
-  <main>
-    <header><span class="eyebrow">MINECRAFT & ROBLOX / ENGLISH CREATORS</span><span class="badge">DRY-RUN</span></header>
-    <section id="overview">
-      <div class="title-row"><div><h1>Seu próximo projeto<br>começa com uma conversa.</h1><p class="muted">Descubra criadores, avalie oportunidades e prepare propostas com contexto.</p></div><div class="schedule"><span class="dot"></span> Agenda configurada<strong>09:00</strong><small>America/Fortaleza · ativação pendente no GitHub</small></div></div>
-      <div id="connection" class="notice" hidden><form id="auth-form"><label>Token de acesso <input id="auth-token" type="password" autocomplete="off" required></label><button>Conectar</button></form></div>
-      <div id="notice" class="notice" role="status" hidden></div>
-      <div id="stats" class="stats" aria-live="polite"></div>
-      <div class="panel discover"><div><span class="eyebrow">01 / DESCOBERTA</span><h2>Encontre sua próxima oportunidade</h2><p id="daily-progress" class="muted">Carregando histórico…</p></div><form id="discover-form"><label>Termo adicional <input name="query" placeholder="Ex.: hardcore, challenges" maxlength="120"></label><label>Máximo de canais <input name="maxResults" type="number" min="1" max="100" value="20" required></label><button type="submit">Pesquisar canais <span aria-hidden="true">↗</span></button></form></div>
-    </section>
-    <section id="prospects"><div class="section-heading"><div><span class="eyebrow">02 / PIPELINE</span><h2>Canais e propostas</h2></div><button id="refresh" class="secondary">Atualizar</button></div><div class="toolbar"><label>Pesquisa salva<select id="campaign-select" aria-label="Pesquisa salva"></select></label><label>Exibir<select id="lead-filter"><option value="all">Todos os canais</option><option value="qualified">Qualificados</option><option value="pending">Pendentes</option><option value="simulated">Simulados</option></select></label><button id="simulate">Simular contatos elegíveis</button></div><p id="campaign-notes" class="muted"></p><div id="leads" class="lead-list"></div></section>
-    <section id="rules"><div class="section-heading"><div><span class="eyebrow">03 / CRITÉRIOS</span><h2>Regras da automação</h2></div><span class="badge light">Envio real bloqueado</span></div><form id="rules-form" class="panel"><div id="rule-inputs" class="form-grid"></div><h3>Pesos da qualificação · total 100</h3><div id="weight-inputs" class="form-grid"></div><p class="muted">A faixa de inscritos prioriza canais, sem excluir automaticamente os menores. País BR e conteúdo fora do inglês são excluídos. Edição só recebe pontos com revisão e evidência. Mudanças de pesos serão aplicadas nas novas pesquisas e na próxima simulação.</p><label class="check"><input type="checkbox" name="complianceReviewed"> Revisei conformidade, qualidade das mensagens e reputação da conta para aumentar o limite.</label><button>Salvar regras</button></form></section>
-    <section id="integrations"><div class="section-heading"><div><span class="eyebrow">04 / CONEXÕES</span><h2>Integrações</h2></div></div><div id="integration-cards" class="integration-grid"></div><p class="muted">Configuração presente não significa credencial validada. Gmail está preparado para rascunhos e consulta de respostas; o envio real não está disponível nesta versão. O agendamento requer configuração e ativação no GitHub.</p></section>
-    <section id="history"><div class="section-heading"><div><span class="eyebrow">05 / HISTÓRICO</span><h2>Respostas e bloqueios</h2></div></div><div class="panel"><p class="muted">Registre respostas na ficha do canal. Recusas e descadastros bloqueiam o endereço globalmente. Follow-ups estão desativados.</p><form id="block-form" class="inline-form"><label>Não contatar <input name="email" type="email" placeholder="business@creator.com" required></label><button class="secondary">Bloquear endereço</button></form><div id="blocks"></div></div><h3>Erros recentes</h3><div id="errors" class="panel"></div></section>
-    <footer>Daniel · Freelance video editor <span>Uma abordagem por criador. Sem promessas inventadas.</span></footer>
-  </main>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Daniel · Creator Outreach</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script defer src="/app.js"></script>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <a class="brand" href="#overview"
+        ><span class="monogram">D.</span
+        ><span>Daniel<span class="brand-sub">CREATOR OUTREACH</span></span></a
+      >
+      <nav aria-label="Navegação">
+        <a href="#overview">Visão geral</a><a href="#prospects">Canais e propostas</a
+        ><a href="#rules">Regras da automação</a><a href="#integrations">Integrações</a
+        ><a href="#history">Respostas e bloqueios</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <span class="dot"></span><span id="sidebar-mode">Modo de simulação</span>
+        <p id="delivery-note">Envio real bloqueado até autorização.</p>
+      </div>
+    </aside>
+    <main>
+      <header>
+        <span class="eyebrow">MINECRAFT & ROBLOX / ENGLISH CREATORS</span
+        ><span class="badge" id="delivery-badge">DRY-RUN</span>
+      </header>
+      <section id="overview">
+        <div class="title-row">
+          <div>
+            <h1>Seu próximo projeto<br />começa com uma conversa.</h1>
+            <p class="muted">
+              Descubra criadores, avalie oportunidades e prepare propostas com contexto.
+            </p>
+          </div>
+          <div class="schedule">
+            <span class="dot"></span> Agenda configurada<strong>09:00</strong
+            ><small>America/Fortaleza · ativação pendente no GitHub</small>
+          </div>
+        </div>
+        <div id="connection" class="notice" hidden>
+          <form id="auth-form">
+            <label
+              >Token de acesso
+              <input id="auth-token" type="password" autocomplete="off" required /></label
+            ><button>Conectar</button>
+          </form>
+        </div>
+        <div id="notice" class="notice" role="status" hidden></div>
+        <div id="stats" class="stats" aria-live="polite"></div>
+        <div class="panel discover">
+          <div>
+            <span class="eyebrow">01 / DESCOBERTA</span>
+            <h2>Encontre sua próxima oportunidade</h2>
+            <p id="daily-progress" class="muted">Carregando histórico…</p>
+          </div>
+          <form id="discover-form">
+            <label
+              >Termo adicional
+              <input name="query" placeholder="Ex.: hardcore, challenges" maxlength="120" /></label
+            ><label
+              >Máximo de canais
+              <input name="maxResults" type="number" min="1" max="100" value="20" required /></label
+            ><button type="submit">Pesquisar canais <span aria-hidden="true">↗</span></button>
+          </form>
+        </div>
+      </section>
+      <section id="prospects">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">02 / PIPELINE</span>
+            <h2>Canais e propostas</h2>
+          </div>
+          <button id="refresh" class="secondary">Atualizar</button>
+        </div>
+        <div class="toolbar">
+          <label
+            >Pesquisa salva<select id="campaign-select" aria-label="Pesquisa salva"></select></label
+          ><label
+            >Exibir<select id="lead-filter">
+              <option value="all">Todos os canais</option>
+              <option value="qualified">Qualificados</option>
+              <option value="pending">Pendentes</option>
+              <option value="simulated">Simulados</option>
+            </select></label
+          ><button id="simulate">Simular contatos elegíveis</button>
+        </div>
+        <p id="campaign-notes" class="muted"></p>
+        <div id="leads" class="lead-list"></div>
+      </section>
+      <section id="channel-table">
+        <div class="section-heading">
+          <h2>Todos os canais</h2>
+          <button id="export-csv" class="secondary">Exportar CSV</button>
+        </div>
+        <div class="panel">
+          <div class="form-grid table-filters">
+            <label
+              >Pesquisar<input id="table-search" type="search" placeholder="Nome, ID ou e-mail"
+            /></label>
+            <label
+              >Nicho<select id="table-niche">
+                <option value="">Todos</option>
+                <option value="minecraft">Minecraft</option>
+                <option value="roblox">Roblox</option>
+              </select></label
+            >
+            <label>Inscritos mínimos<input id="table-subs-min" type="number" min="0" /></label>
+            <label>Inscritos máximos<input id="table-subs-max" type="number" min="0" /></label>
+            <label
+              >Pontuação mínima<input id="table-score" type="number" min="0" max="100" value="0"
+            /></label>
+            <label>Descoberto desde<input id="table-date" type="date" /></label>
+            <label
+              >Status<select id="table-status">
+                <option value="">Todos</option>
+                <option value="qualified">Qualificado</option>
+                <option value="pending">Pendente</option>
+                <option value="simulated">Simulado</option>
+                <option value="sent">Enviado</option>
+                <option value="unknown">Resultado incerto</option>
+                <option value="negotiation">Negociação</option>
+                <option value="won">Cliente</option>
+              </select></label
+            >
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Canal</th>
+                  <th>Nicho</th>
+                  <th>Inscritos</th>
+                  <th>Pontos</th>
+                  <th>Contato</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="channel-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section id="rules">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">03 / CRITÉRIOS</span>
+            <h2>Regras da automação</h2>
+          </div>
+          <span class="badge light" id="delivery-rule-badge">Envio real bloqueado</span>
+        </div>
+        <form id="rules-form" class="panel">
+          <div id="rule-inputs" class="form-grid"></div>
+          <h3>Pesos da qualificação · total 100</h3>
+          <div id="weight-inputs" class="form-grid"></div>
+          <p class="muted">
+            A faixa de inscritos prioriza canais, sem excluir automaticamente os menores. País BR e
+            conteúdo fora do inglês são excluídos. Edição só recebe pontos com revisão e evidência.
+            Mudanças de pesos serão aplicadas nas novas pesquisas e na próxima simulação.
+          </p>
+          <label class="check"
+            ><input type="checkbox" name="complianceReviewed" /> Revisei conformidade, qualidade das
+            mensagens e reputação da conta para aumentar o limite.</label
+          ><button>Salvar regras</button>
+        </form>
+      </section>
+      <section id="integrations">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">04 / CONEXÕES</span>
+            <h2>Integrações</h2>
+          </div>
+        </div>
+        <div id="integration-cards" class="integration-grid"></div>
+        <p class="muted">
+          Configuração presente não significa credencial validada. O envio real exige autorização
+          inicial, identidade e conformidade validadas. O agendamento requer ativação no GitHub.
+        </p>
+      </section>
+      <section id="operation-controls">
+        <div class="section-heading">
+          <h2>Operação e autorização</h2>
+          <button id="pause-toggle" class="secondary">Pausar automação</button>
+        </div>
+        <div class="panel">
+          <p id="operation-status" class="muted"></p>
+          <div class="actions">
+            <button id="run-cycle">Executar ciclo em simulação</button
+            ><button id="gmail-connect" class="secondary">Conectar Gmail</button
+            ><button id="gmail-validate" class="secondary">Validar credenciais do ambiente</button
+            ><button id="sync-replies" class="secondary">Sincronizar respostas</button
+            ><button id="reconcile" class="secondary">Reconciliar resultados incertos</button>
+          </div>
+          <ul id="live-reasons" class="evidence"></ul>
+          <form id="operation-form">
+            <h3>Identidade e regras legais</h3>
+            <div class="form-grid">
+              <label>Nome comercial<input name="businessName" maxlength="100" /></label
+              ><label>E-mail da conta Gmail<input name="businessEmail" type="email" /></label
+              ><label
+                >Endereço postal comercial<input
+                  name="postalAddress"
+                  minlength="15"
+                  maxlength="500" /></label
+              ><label
+                >Retenção (dias)<input
+                  name="retentionDays"
+                  type="number"
+                  min="30"
+                  max="730"
+                  value="90"
+                  required
+              /></label>
+            </div>
+            <label
+              >Jurisdições autorizadas (JSON)<textarea
+                name="jurisdictions"
+                spellcheck="false"
+                placeholder='[{"country":"US","legalBasis":"Base e requisitos revisados para destinatários comerciais...","reviewedAt":"2026-11-04T12:00:00Z","evidenceUrl":"https://..."}]'
+              >
+[]</textarea>
+            </label>
+            <p class="muted">
+              País desconhecido não recebe envio real. A base legal e os requisitos de cada país
+              devem ser revisados por você antes da ativação. Alterar identidade ou jurisdições
+              revoga a autorização anterior.
+            </p>
+            <label class="check"
+              ><input name="useAI" type="checkbox" checked /> Usar OpenAI quando configurada</label
+            >
+            <label class="check"
+              ><input name="reportEmail" type="checkbox" /> Enviar resumo ao meu próprio e-mail
+              comercial, dentro do limite diário e somente quando o envio real estiver
+              autorizado</label
+            >
+            <button class="secondary">Salvar configuração operacional</button>
+          </form>
+          <form id="authorize-form">
+            <h3>Ativação inicial de envios reais</h3>
+            <p class="muted">
+              Esta ação não funciona enquanto os bloqueios do servidor estiverem ativos. Depois de
+              ativada, a rotina diária poderá enviar propostas elegíveis sem aprovação individual.
+            </p>
+            <label class="check"
+              ><input name="identityReviewed" type="checkbox" required /> Validei a identidade
+              comercial e a conta Google.</label
+            ><label class="check"
+              ><input name="complianceReviewed" type="checkbox" required /> Revisei a conformidade
+              de todas as jurisdições habilitadas.</label
+            ><label class="check"
+              ><input name="unsubscribeReviewed" type="checkbox" required /> Testei o descadastro
+              público e os requisitos do Gmail.</label
+            ><label
+              >Digite AUTHORIZE_AUTOMATIC_OUTREACH<input
+                name="authorization"
+                autocomplete="off"
+                required
+            /></label>
+            <div class="actions">
+              <button class="secondary">Registrar autorização inicial</button
+              ><button id="revoke" class="secondary" type="button">Revogar e pausar</button>
+            </div>
+          </form>
+        </div>
+      </section>
+      <section id="reports">
+        <div class="section-heading"><h2>Relatórios de execução</h2></div>
+        <div id="run-reports" class="lead-list"></div>
+      </section>
+      <section id="outbox">
+        <div class="section-heading"><h2>Histórico de entrega e negociações</h2></div>
+        <div id="delivery-history" class="lead-list"></div>
+      </section>
+      <section id="history">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">05 / HISTÓRICO</span>
+            <h2>Respostas e bloqueios</h2>
+          </div>
+        </div>
+        <div class="panel">
+          <p class="muted">
+            Registre respostas na ficha do canal. Recusas e descadastros bloqueiam o endereço
+            globalmente. Follow-ups estão desativados.
+          </p>
+          <form id="block-form" class="inline-form">
+            <label
+              >Não contatar
+              <input name="email" type="email" placeholder="business@creator.com" required /></label
+            ><button class="secondary">Bloquear endereço</button>
+          </form>
+          <div id="blocks"></div>
+        </div>
+        <h3>Erros recentes</h3>
+        <div id="errors" class="panel"></div>
+      </section>
+      <footer>
+        Daniel · Freelance video editor
+        <span>Uma abordagem por criador. Sem promessas inventadas.</span>
+      </footer>
+    </main>
+  </body>
 </html>

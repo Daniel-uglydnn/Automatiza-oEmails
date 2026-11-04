@@ -4,15 +4,15 @@
     ui-sans-serif,
     -apple-system,
     BlinkMacSystemFont,
-    "Segoe UI",
+    'Segoe UI',
     sans-serif;
   color: #172b28;
   background: #f7f8f4;
   line-height: 1.55;
   font-synthesis: none;
-  --green:#246a52;
-  --border:#dce3db;
-  --muted:#69786f;
+  --green: #246a52;
+  --border: #dce3db;
+  --muted: #69786f;
 }
 * {
   box-sizing: border-box;
@@ -48,7 +48,7 @@ button:hover {
   background: #18543e;
 }
 button:disabled {
-  opacity: .5;
+  opacity: 0.5;
   cursor: wait;
 }
 button.secondary {
@@ -107,7 +107,7 @@ h1 {
 }
 h2 {
   font-size: 24px;
-  letter-spacing: -.6px;
+  letter-spacing: -0.6px;
   margin-bottom: 10px;
 }
 h3 {
@@ -674,4 +674,66 @@ footer {
     display: block;
     margin-top: 8px;
   }
+}
+.table-scroll {
+  overflow-x: auto;
+  width: 100%;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+th,
+td {
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  padding: 12px 10px;
+  vertical-align: top;
+}
+th {
+  color: var(--muted);
+  font-size: 11px;
+}
+td small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+}
+.open-channel {
+  white-space: normal;
+  text-align: left;
+  padding: 5px 8px;
+  min-width: 140px;
+}
+#operation-form,
+#authorize-form {
+  border-top: 1px solid var(--border);
+  margin-top: 25px;
+  padding-top: 16px;
+}
+#operation-form textarea {
+  min-height: 150px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+}
+.crm-form {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  margin-top: 18px;
+}
+.crm-form label {
+  flex: 1;
+}
+.mail-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.7;
+}
+section,
+.panel {
+  min-width: 0;
 }

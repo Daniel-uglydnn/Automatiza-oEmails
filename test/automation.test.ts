@@ -1,0 +1,245 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { fixture, now } from './helpers.js';
+import { loadConfig } from '../src/config.js';
+import { DeliveryService } from '../src/services/delivery.js';
+import { ReplyTracking } from '../src/services/tracking.js';
+import { PublicWebsiteContacts, publicAddress } from '../src/providers/public-contacts.js';
+import { AutomationService } from '../src/services/automation.js';
+import { campaignsCSV } from '../src/services/reports.js';
+import { operationsSchema } from '../src/domain/operations.js';
+import { demoChannels } from '../src/providers/demo.js';
+import { retryRead } from '../src/providers/retry.js';
+import { minimizeHistory } from '../src/services/retention.js';
+import { liveFixture } from './live-helpers.js';
+
+test('ciclo diário completo gera relatório real da simulação e é idempotente', async (t) => {
+  const { service, repository } = await fixture(t);
+  const config = loadConfig({});
+  const transport = async () => {
+    throw new Error('Gmail must never be called in dry-run');
+  };
+  const delivery = new DeliveryService(config, repository, transport);
+  const runner = new AutomationService(
+    config,
+    service,
+    delivery,
+    new ReplyTracking(repository, transport),
+    new PublicWebsiteContacts([]),
+    () => now,
+  );
+  const first = await runner.run(true, true),
+    second = await runner.run(true, true);
+  assert.equal(first.id, second.id);
+  assert.equal(first.status, 'completed');
+  assert.equal(first.report?.discovered, 8);
+  assert.equal(first.report?.qualified, 4);
+  assert.equal(first.report?.minecraft, 4);
+  assert.equal(first.report?.roblox, 4);
+  assert.equal(first.report?.sent, 0);
+  assert.equal(first.report?.simulated, 4);
+  assert.equal(first.report?.top.length, 8);
+  assert.equal((await repository.list()).length, 1);
+  assert.equal((await repository.listRecords('runs')).length, 1);
+});
+test('pausa persiste e impede descoberta, retomada produz dados sem reiniciar o projeto', async (t) => {
+  const { service, repository } = await fixture(t);
+  const config = loadConfig({});
+  const noMail = async () => {
+    throw new Error('not configured');
+  };
+  const delivery = new DeliveryService(config, repository, noMail);
+  const runner = new AutomationService(
+    config,
+    service,
+    delivery,
+    new ReplyTracking(repository, noMail),
+    new PublicWebsiteContacts([]),
+    () => now,
+  );
+  await repository.putRecord('operations', 'default', operationsSchema.parse({ paused: true }));
+  assert.equal((await runner.run(true)).status, 'skipped');
+  assert.equal((await repository.list()).length, 0);
+  await repository.putRecord('operations', 'default', operationsSchema.parse({ paused: false }));
+  assert.equal((await runner.run(true)).report?.discovered, 8);
+});
+test('recuperação usa campanha persistida após interrupção e não duplica canais', async (t) => {
+  const { service, repository } = await fixture(t);
+  const campaign = await service.create({ maxResults: 8 });
+  const id = 'daily:2026-11-04';
+  await repository.putRecord('runs', id, {
+    id,
+    day: '2026-11-04',
+    startedAt: now.toISOString(),
+    completedAt: null,
+    status: 'running',
+    campaignId: campaign.id,
+    report: null,
+  });
+  const config = loadConfig({}),
+    noMail = async () => {
+      throw new Error('no mail');
+    };
+  const delivery = new DeliveryService(config, repository, noMail);
+  const runner = new AutomationService(
+    config,
+    service,
+    delivery,
+    new ReplyTracking(repository, noMail),
+    new PublicWebsiteContacts([]),
+    () => now,
+  );
+  const recovered = await runner.run(true, true);
+  assert.equal(recovered.campaignId, campaign.id);
+  assert.equal((await repository.list()).length, 1);
+  assert.ok(recovered.report?.errors.some((e) => e.includes('Retomada')));
+});
+test('CSV contém fontes e protege contra fórmulas de planilha', async (t) => {
+  const { service } = await fixture(t);
+  const campaign = await service.create({ maxResults: 2 });
+  campaign.leads[0]!.channel.title = '=HYPERLINK("https://evil.example")';
+  const csv = campaignsCSV([campaign], []);
+  assert.match(csv, /"'=HYPERLINK/);
+  assert.match(csv, /verified_at/);
+  assert.match(csv, /example.invalid/);
+});
+test('lock exclusivo de execução impede ciclos diários simultâneos', async (t) => {
+  const { repository } = await fixture(t);
+  await repository.withAutomationLock(() =>
+    assert.rejects(() => repository.withAutomationLock(async () => undefined), /execução diária/),
+  );
+});
+test('backoff é exponencial e limitado, sem repetir erro não temporário', async () => {
+  let calls = 0;
+  const delays: number[] = [];
+  const value = await retryRead(
+    async () => {
+      if (++calls < 3) throw new Error('temporary');
+      return 42;
+    },
+    () => true,
+    async (ms) => {
+      delays.push(ms);
+    },
+  );
+  assert.equal(value, 42);
+  assert.equal(calls, 3);
+  assert.equal(delays.length, 2);
+  assert.ok(delays[1]! > delays[0]!);
+  calls = 0;
+  await assert.rejects(() =>
+    retryRead(
+      async () => {
+        calls++;
+        throw new Error('auth');
+      },
+      () => false,
+    ),
+  );
+  assert.equal(calls, 1);
+});
+test('retenção minimiza conteúdo antigo e preserva IDs para deduplicação', async (t) => {
+  const { service, repository } = await fixture(t);
+  const campaign = await service.create({ maxResults: 2 });
+  campaign.createdAt = '2026-01-01T12:00:00Z';
+  await repository.save(campaign);
+  assert.equal(await minimizeHistory(repository, 90, now), 2);
+  const minimized = await repository.get(campaign.id);
+  assert.equal(minimized?.leads[0]?.draft, null);
+  assert.equal(minimized?.leads[0]?.channel.email, null);
+  assert.equal(minimized?.leads[0]?.channel.id, campaign.leads[0]?.channel.id);
+  assert.equal(
+    (await service.create({ maxResults: 2 })).leads.some(
+      (l) => l.channel.id === campaign.leads[0]!.channel.id,
+    ),
+    false,
+  );
+});
+test('contatos em site oficial respeitam robots e registram URL exata', async () => {
+  const calls: string[] = [];
+  const fetcher: typeof fetch = async (request, init) => {
+    const url = String(request);
+    calls.push(url);
+    assert.equal(init?.redirect, 'manual');
+    return new Response(
+      url.endsWith('/robots.txt')
+        ? 'User-agent: *\nAllow: /\nCrawl-delay: 0'
+        : '<html><body><p>Business inquiries: work@example.com</p></body></html>',
+      {
+        status: 200,
+        headers: { 'content-type': url.endsWith('/robots.txt') ? 'text/plain' : 'text/html' },
+      },
+    );
+  };
+  const channel = demoChannels(now)[4]!;
+  channel.officialSites = ['https://studio.example/contact'];
+  const result = await new PublicWebsiteContacts(['studio.example'], fetcher, async () => [
+    '8.8.8.8',
+  ]).find(channel);
+  assert.equal(result.email, 'work@example.com');
+  assert.equal(result.contactUrl, 'https://studio.example/contact');
+  assert.equal(result.contactSource, 'official_website');
+  assert.ok(result.contactVerifiedAt);
+  assert.equal(calls.length, 2);
+});
+test('robôs proibidos, IP privado, redirecionamentos e host não aprovado são bloqueados', async () => {
+  assert.equal(publicAddress('127.0.0.1'), false);
+  assert.equal(publicAddress('10.0.0.1'), false);
+  assert.equal(publicAddress('::1'), false);
+  assert.equal(publicAddress('169.254.169.254'), false);
+  const channel = demoChannels(now)[4]!;
+  channel.officialSites = ['https://studio.example/contact'];
+  let calls = 0;
+  const denied: typeof fetch = async () => {
+    calls++;
+    return new Response('User-agent: *\nDisallow: /', {
+      status: 200,
+      headers: { 'Content-Type': 'text/plain' },
+    });
+  };
+  assert.equal(
+    (
+      await new PublicWebsiteContacts(['studio.example'], denied, async () => ['8.8.8.8']).find(
+        channel,
+      )
+    ).email,
+    null,
+  );
+  assert.equal(calls, 1);
+  calls = 0;
+  await new PublicWebsiteContacts(['studio.example'], denied, async () => ['127.0.0.1']).find(
+    channel,
+  );
+  assert.equal(calls, 0);
+  await new PublicWebsiteContacts([], denied, async () => ['8.8.8.8']).find(channel);
+  assert.equal(calls, 0);
+  const redirect: typeof fetch = async () =>
+    new Response(null, { status: 302, headers: { Location: 'http://169.254.169.254/latest' } });
+  assert.equal(
+    (
+      await new PublicWebsiteContacts(['studio.example'], redirect, async () => ['8.8.8.8']).find(
+        channel,
+      )
+    ).email,
+    null,
+  );
+});
+test('fila real processa campanha pendente e relatório conta os envios do backlog', async (t) => {
+  const f = await liveFixture(t);
+  const runner = new AutomationService(
+    f.config,
+    f.service,
+    f.dispatcher,
+    new ReplyTracking(f.repository, async () => f.transport),
+    new PublicWebsiteContacts([]),
+    () => now,
+  );
+  const run = await runner.run(true, false);
+  assert.equal(run.status, 'completed');
+  assert.equal(run.report?.sent, 2);
+  assert.equal(f.calls.length, 2);
+  assert.equal(
+    (await f.repository.deliveries()).every((d) => d.campaignId === f.campaign.id),
+    true,
+  );
+});
