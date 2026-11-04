@@ -14,6 +14,7 @@ import {
 } from '../domain/models.js';
 import { eventSchema, type ErrorEvent } from '../domain/models.js';
 import { deliverySchema, type Delivery } from '../domain/operations.js';
+import { supabaseFailureMessage } from './supabase-errors.js';
 
 export class SupabaseRepository implements Repository {
   private readonly client: SupabaseClient;
@@ -27,9 +28,8 @@ export class SupabaseRepository implements Repository {
         },
       });
   }
-  private check(error: unknown): void {
-    if (error)
-      throw new AppError(502, 'Falha no Supabase. Verifique a conexão, a chave e a migração SQL.');
+  private check(error: unknown, status?: number): void {
+    if (error) throw new AppError(502, supabaseFailureMessage(error, status));
   }
   async list(): Promise<Campaign[]> {
     const campaigns: Campaign[] = [];
@@ -65,12 +65,12 @@ export class SupabaseRepository implements Repository {
     this.check(error);
   }
   async getRules(): Promise<Rules> {
-    const { data, error } = await this.client
+    const { data, error, status } = await this.client
       .from('settings')
       .select('document')
       .eq('id', 'default')
       .maybeSingle();
-    this.check(error);
+    this.check(error, status);
     return rulesSchema.parse(data?.document ?? defaultRules);
   }
   async saveRules(rules: Rules): Promise<void> {
