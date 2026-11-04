@@ -1,4 +1,4 @@
-name: Prospecção diária (somente simulação)
+name: Prospecção diária (dry-run por padrão)
 on:
   schedule:
     - cron: '0 12 * * *' # 09:00 America/Fortaleza (UTC-3)
@@ -19,6 +19,16 @@ jobs:
       YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      DELIVERY_MODE: ${{ vars.DELIVERY_MODE || 'dry-run' }}
+      ENABLE_LIVE_SENDS: ${{ vars.ENABLE_LIVE_SENDS || 'false' }}
+      PUBLIC_ORIGIN: ${{ vars.PUBLIC_ORIGIN }}
+      API_AUTH_TOKEN: ${{ secrets.API_AUTH_TOKEN }}
+      GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+      GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+      CREDENTIAL_ENCRYPTION_KEY: ${{ secrets.CREDENTIAL_ENCRYPTION_KEY }}
+      UNSUBSCRIBE_SIGNING_KEY: ${{ secrets.UNSUBSCRIBE_SIGNING_KEY }}
+      CONTACT_ALLOWED_HOSTS: ${{ vars.CONTACT_ALLOWED_HOSTS }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,4 +36,4 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run prospect -- --scheduled --simulate --max 100
+      - run: npm run automate -- --scheduled

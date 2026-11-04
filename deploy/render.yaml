@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: daniel-creator-outreach
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: APP_MODE
+        value: live
+      - key: STORAGE_DRIVER
+        value: supabase
+      - key: DELIVERY_MODE
+        value: dry-run
+      - key: ENABLE_LIVE_SENDS
+        value: 'false'
+      - key: API_AUTH_TOKEN
+        generateValue: true
+      - key: PUBLIC_ORIGIN
+        sync: false
+      - key: YOUTUBE_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: CREDENTIAL_ENCRYPTION_KEY
+        sync: false
+      - key: UNSUBSCRIBE_SIGNING_KEY
+        sync: false
+      - key: GMAIL_CLIENT_ID
+        sync: false
+      - key: GMAIL_CLIENT_SECRET
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
