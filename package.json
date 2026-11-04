@@ -15,16 +15,22 @@
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test --test-isolation=none test/*.test.ts",
     "check": "npm run typecheck && npm test && npm run build",
-    "prospect": "node --import tsx src/cli.ts"
+    "prospect": "node --import tsx src/cli.ts",
+    "automate": "node --import tsx src/run.ts",
+    "format": "prettier --write src test scripts docs README.md .github *.json .prettierrc.json",
+    "format:check": "prettier --check src test scripts docs README.md .github *.json .prettierrc.json"
   },
   "dependencies": {
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/static": "^10.1.9",
     "@supabase/supabase-js": "^2.80.0",
+    "cheerio": "^1.2.0",
     "dotenv": "^17.2.3",
     "fastify": "^5.6.2",
+    "ipaddr.js": "^2.5.0",
     "openai": "^6.7.0",
     "proper-lockfile": "^4.1.2",
+    "robots-parser": "^3.0.1",
     "undici": "^7.16.0",
     "zod": "^4.1.12"
   },
@@ -33,6 +39,7 @@
     "@types/node": "^24.10.0",
     "@types/proper-lockfile": "^4.1.4",
     "esbuild": "^0.25.12",
+    "prettier": "^3.9.10",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
