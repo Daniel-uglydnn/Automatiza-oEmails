@@ -140,3 +140,42 @@ test('rotas inexistentes não oferecem nenhum endpoint de envio', async (t) => {
   assert.equal((await app.inject('/.env')).statusCode, 404);
   assert.equal((await app.inject('/../package.json')).statusCode, 404);
 });
+test('primeiro deploy Render usa origem automática com autenticação e envio desligado', async (t) => {
+  const { service } = await fixture(t);
+  const token = 'test-admin-token-with-more-than-32-characters';
+  const config = loadConfig({
+    HOST: '0.0.0.0',
+    API_AUTH_TOKEN: token,
+    RENDER_EXTERNAL_URL: 'https://test-service.onrender.com/',
+  });
+  assert.equal(config.PUBLIC_ORIGIN, 'https://test-service.onrender.com');
+  assert.equal(config.DELIVERY_MODE, 'dry-run');
+  assert.equal(config.ENABLE_LIVE_SENDS, 'false');
+  const app = await buildApp(config, service, resolve('src/web'));
+  t.after(() => app.close());
+  const headers = { host: 'test-service.onrender.com' };
+  assert.equal((await app.inject({ url: '/health', headers })).statusCode, 200);
+  assert.equal((await app.inject({ url: '/api/dashboard', headers })).statusCode, 401);
+  assert.equal(
+    (
+      await app.inject({
+        url: '/api/dashboard',
+        headers: { ...headers, authorization: `Bearer ${token}`, origin: config.PUBLIC_ORIGIN },
+      })
+    ).statusCode,
+    200,
+  );
+});
+test('domínio explícito prevalece sobre Render e origem automática insegura é rejeitada', () => {
+  assert.equal(
+    loadConfig({
+      PUBLIC_ORIGIN: 'https://custom.example',
+      RENDER_EXTERNAL_URL: 'https://default.onrender.com',
+    }).PUBLIC_ORIGIN,
+    'https://custom.example',
+  );
+  assert.throws(
+    () => loadConfig({ RENDER_EXTERNAL_URL: 'http://unsafe.example' }),
+    /PUBLIC_ORIGIN/,
+  );
+});

@@ -20,5 +20,5 @@ COPY --from=build --chown=node:node /app/package.json ./package.json
 RUN mkdir -p /app/.data && chown node:node /app/.data
 USER node
 EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s CMD node -e "require('node:http').get({hostname:'127.0.0.1',port:process.env.PORT,path:'/health',headers:{host:process.env.PUBLIC_ORIGIN?new URL(process.env.PUBLIC_ORIGIN).host:'127.0.0.1'}},r=>{r.resume();process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s CMD node -e "require('node:http').get({hostname:'127.0.0.1',port:process.env.PORT,path:'/health',headers:{host:(process.env.PUBLIC_ORIGIN||process.env.RENDER_EXTERNAL_URL)?new URL(process.env.PUBLIC_ORIGIN||process.env.RENDER_EXTERNAL_URL).host:'127.0.0.1'}},r=>{r.resume();process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"
 CMD ["node", "dist/server.js"]

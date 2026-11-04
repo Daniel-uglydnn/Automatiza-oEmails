@@ -17,7 +17,7 @@ O `Dockerfile` usa build em duas etapas, Node 24, dependências de produção e 
 
 Configure:
 
-- `HOST=0.0.0.0`, `PORT` fornecida pelo provedor, `PUBLIC_ORIGIN=https://seu-dominio` sem caminho.
+- `HOST=0.0.0.0`, `PORT` fornecida pelo provedor. No Render, deixe `PUBLIC_ORIGIN` vazio para usar automaticamente `RENDER_EXTERNAL_URL`, fornecida pela plataforma. Para domínio personalizado, configure `PUBLIC_ORIGIN=https://seu-dominio` sem caminho; esse valor tem prioridade.
 - `API_AUTH_TOKEN` aleatório de pelo menos 32 caracteres. Ele protege todas as rotas `/api/`; os tokens Google nunca são enviados ao frontend. O token administrativo digitado fica somente na memória da aba.
 - Chaves YouTube/OpenAI/Supabase e OAuth descritas no `.env.example` e em [Google setup](google-setup.md).
 - Chaves estáveis `CREDENTIAL_ENCRYPTION_KEY` e `UNSUBSCRIBE_SIGNING_KEY`, compartilhadas com o agendamento.

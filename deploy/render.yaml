@@ -17,8 +17,6 @@ services:
         value: 'false'
       - key: API_AUTH_TOKEN
         generateValue: true
-      - key: PUBLIC_ORIGIN
-        sync: false
       - key: YOUTUBE_API_KEY
         sync: false
       - key: SUPABASE_URL

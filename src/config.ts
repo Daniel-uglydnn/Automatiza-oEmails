@@ -14,6 +14,7 @@ const envSchema = z.object({
   DATA_DIR: z.string().min(1).default('.data'),
   API_AUTH_TOKEN: optionalValue,
   PUBLIC_ORIGIN: optionalValue,
+  RENDER_EXTERNAL_URL: optionalValue,
   UNSUBSCRIBE_SIGNING_KEY: optionalValue,
   CREDENTIAL_ENCRYPTION_KEY: optionalValue,
   ENABLE_LIVE_SENDS: z.enum(['true', 'false']).default('false'),
@@ -39,6 +40,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       `Configuração inválida: ${parsed.error.issues.map((issue) => issue.path.join('.')).join(', ')}`,
     );
   const config = parsed.data;
+  // O Render só informa o hostname definitivo ao criar o serviço.
+  // Uma origem explícita continua tendo prioridade para domínios personalizados.
+  if (!config.PUBLIC_ORIGIN && config.RENDER_EXTERNAL_URL) {
+    config.PUBLIC_ORIGIN = config.RENDER_EXTERNAL_URL.replace(/\/$/, '');
+  }
   if (
     !['127.0.0.1', '::1', 'localhost'].includes(config.HOST) &&
     (config.API_AUTH_TOKEN?.length ?? 0) < 32
