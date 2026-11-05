@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { randomUUID } from 'node:crypto';
 import type { Config } from '../config.js';
 import { AppError } from '../domain/errors.js';
 import type { Repository } from '../domain/models.js';
@@ -43,6 +44,74 @@ export class OperationsService {
       await this.repository.putRecord('operations', 'default', settings);
       return settings;
     });
+  }
+  async testUnsubscribe(): Promise<{ verified: true; verifiedAt: string }> {
+    if (!this.config.PUBLIC_ORIGIN || !this.config.UNSUBSCRIBE_SIGNING_KEY)
+      throw new AppError(
+        409,
+        'Configure UNSUBSCRIBE_SIGNING_KEY e a origem pública HTTPS (PUBLIC_ORIGIN ou URL automática do Render), e aguarde o deploy ficar Live antes de testar o descadastro.',
+      );
+    // .invalid é reservado para testes. Nunca usa a conta Gmail nem um lead real.
+    const email = `unsubscribe-self-test-${randomUUID()}@example.invalid`;
+    const token = unsubscribeToken(email, this.config.UNSUBSCRIBE_SIGNING_KEY);
+    const url = `${this.config.PUBLIC_ORIGIN}/unsubscribe?token=${token}`;
+    await this.repository.withLock(async () => {
+      const settings = await this.get();
+      settings.unsubscribeVerifiedAt = null;
+      await this.repository.putRecord('operations', 'default', settings);
+    });
+    try {
+      // Não manter lock durante HTTP: o POST público precisa persistir a exclusão.
+      const confirmation = await this.fetcher(url, {
+        method: 'GET',
+        redirect: 'error',
+        signal: AbortSignal.timeout(15000),
+      });
+      const confirmed =
+        confirmation.ok &&
+        confirmation.headers.get('X-Unsubscribe-Handler') === 'creator-outreach-v1';
+      await confirmation.body?.cancel();
+      if (!confirmed)
+        throw new AppError(
+          502,
+          'A página pública de descadastro não passou no teste. Confira o domínio público e o último deploy.',
+        );
+      const result = await this.fetcher(url, {
+        method: 'POST',
+        redirect: 'error',
+        signal: AbortSignal.timeout(15000),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'List-Unsubscribe=One-Click',
+      });
+      const accepted = result.ok;
+      await result.body?.cancel();
+      if (!accepted)
+        throw new AppError(
+          502,
+          'O endpoint público recusou o descadastro de teste. Confira se o deploy está atualizado e a chave está configurada.',
+        );
+      const blocked = (await this.repository.suppressions()).some(
+        (entry) => entry.email === email && entry.reason === 'unsubscribe',
+      );
+      if (!blocked)
+        throw new AppError(
+          502,
+          'O descadastro respondeu, mas o bloqueio não foi encontrado no banco. Confira a configuração do Supabase.',
+        );
+      const verifiedAt = new Date().toISOString();
+      await this.repository.withLock(async () => {
+        const settings = await this.get();
+        settings.unsubscribeVerifiedAt = verifiedAt;
+        await this.repository.putRecord('operations', 'default', settings);
+      });
+      return { verified: true, verifiedAt };
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError(
+        502,
+        'Não foi possível concluir o teste público de descadastro. Confira HTTPS, rede e o último deploy do Render.',
+      );
+    }
   }
   async authorize(input: unknown): Promise<Operations> {
     z.object({

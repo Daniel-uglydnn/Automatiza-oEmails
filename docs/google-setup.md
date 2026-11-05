@@ -31,6 +31,8 @@ Se você já possui um refresh token autorizado, pode configurá-lo como `GMAIL_
 
 ## 4. Ativação futura, depois da validação
 
+Antes da ativação, é possível validar o descadastro sem endereço postal e sem enviar mensagens: em **Operação e autorização**, clique em **Testar descadastro**. O servidor acessa a página pública HTTPS e faz o POST de exclusão usando um endereço fictício exclusivo em `example.invalid`. O teste só é aprovado se o bloqueio estiver persistido no banco. O painel informa a data da última validação; esse teste não concede autorização inicial e não altera `DELIVERY_MODE` ou `ENABLE_LIVE_SENDS`. A exclusão fictícia aparece identificada como teste na lista de bloqueios.
+
 1. Revise no dashboard identidade comercial, e-mail conectado, endereço postal e regras legais de cada país. Nenhum país vem autorizado. País BR e país desconhecido não recebem envio automático.
 2. Publique o dashboard por HTTPS e configure `PUBLIC_ORIGIN` e `UNSUBSCRIBE_SIGNING_KEY` estável. Teste GET de confirmação e POST de descadastro assinado. GET não altera estado; POST funciona sem login e bloqueia o endereço globalmente, inclusive durante pesquisas.
 3. Verifique qualidade e fatos das propostas em dry-run e confirme conformidade, reputação, regras do Gmail e requisitos específicos dos destinatários. A aplicação não decide uma base legal por você.

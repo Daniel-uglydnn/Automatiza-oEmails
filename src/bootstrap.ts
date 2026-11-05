@@ -11,6 +11,7 @@ import { OperationsService } from './services/operations.js';
 import { AutomationService } from './services/automation.js';
 import { ReplyTracking } from './services/tracking.js';
 import { PublicWebsiteContacts } from './providers/public-contacts.js';
+import type { Fetch } from './providers/http.js';
 
 export function createService(config: Config): ProspectingService {
   const repository =
@@ -29,7 +30,11 @@ export function createService(config: Config): ProspectingService {
     key ? new OpenAIWriter(key, config.OPENAI_MODEL) : null,
   );
 }
-export function createModules(config: Config, service: ProspectingService) {
+export function createModules(
+  config: Config,
+  service: ProspectingService,
+  publicFetch: Fetch = fetch,
+) {
   const repository = service.repository;
   const gmail = new GmailConnection(config, repository);
   const transport = () => gmail.transport();
@@ -40,7 +45,7 @@ export function createModules(config: Config, service: ProspectingService) {
       .map((s) => s.trim())
       .filter(Boolean),
   );
-  const operations = new OperationsService(config, repository, gmail);
+  const operations = new OperationsService(config, repository, gmail, publicFetch);
   const automation = new AutomationService(
     config,
     service,

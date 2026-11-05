@@ -306,7 +306,7 @@ async function load() {
     dashboard.suppressions
       .map(
         (b) =>
-          `<div class="block-row">${escape(b.email)} · ${escape(b.reason)} · ${date(b.createdAt)}</div>`,
+          `<div class="block-row">${b.email.startsWith('unsubscribe-self-test-') && b.email.endsWith('@example.invalid') ? 'TESTE DE DESCADASTRO · endereço fictício' : escape(b.email)} · ${escape(b.reason)} · ${date(b.createdAt)}</div>`,
       )
       .join('') || '<p class="muted">Nenhum endereço bloqueado.</p>';
   $('#errors').innerHTML =

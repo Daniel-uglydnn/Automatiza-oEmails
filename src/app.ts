@@ -11,14 +11,16 @@ import type { ProspectingService } from './services/prospecting.js';
 import { createModules } from './bootstrap.js';
 import { campaignsCSV, reportText } from './services/reports.js';
 import { runSchema } from './domain/operations.js';
+import type { Fetch } from './providers/http.js';
 
 const leadParams = z.object({ id: z.uuid(), channelId: z.string().min(1).max(100) });
 export async function buildApp(
   config: Config,
   service: ProspectingService,
   webRoot = resolve('dist/web'),
+  dependencies: { publicFetch?: Fetch } = {},
 ) {
-  const modules = createModules(config, service);
+  const modules = createModules(config, service, dependencies.publicFetch);
   const app = Fastify({ logger: false, bodyLimit: 32768, requestTimeout: 420000 });
   await app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
   app.addContentTypeParser(
@@ -109,6 +111,11 @@ export async function buildApp(
     deliveries: await service.repository.deliveries(),
   }));
   app.put('/api/operations', (request) => modules.operations.update(request.body));
+  app.post(
+    '/api/operations/unsubscribe-test',
+    { config: { rateLimit: { max: 3, timeWindow: '1 minute' } } },
+    () => modules.operations.testUnsubscribe(),
+  );
   app.post('/api/operations/authorize', (request) => modules.operations.authorize(request.body));
   app.post('/api/operations/revoke', async () => {
     await modules.operations.revoke();
@@ -245,13 +252,17 @@ export async function buildApp(
     );
   };
   app.get('/unsubscribe', async (request, reply) => {
-    unsubscribeEmail(request.query);
+    const email = unsubscribeEmail(request.query);
+    const testNotice =
+      email.startsWith('unsubscribe-self-test-') && email.endsWith('@example.invalid')
+        ? '<p>Teste com endereço fictício. Nenhum e-mail será enviado.</p>'
+        : '';
     reply.header('Cache-Control', 'no-store');
     reply.header('X-Unsubscribe-Handler', 'creator-outreach-v1');
     return reply
       .type('text/html')
       .send(
-        '<!doctype html><html lang="en"><meta charset="UTF-8"><title>Unsubscribe</title><h1>Stop commercial contact</h1><p>Confirm to block this business address from future outreach.</p><form method="post"><button type="submit">Unsubscribe</button></form></html>',
+        `<!doctype html><html lang="en"><meta charset="UTF-8"><title>Unsubscribe</title><h1>Stop commercial contact</h1>${testNotice}<p>Confirm to block this business address from future outreach.</p><form method="post"><button type="submit">Unsubscribe</button></form></html>`,
       );
   });
   app.post('/unsubscribe', async (request, reply) => {

@@ -70,6 +70,9 @@ export function renderOperations(data: OperationData, history: Campaign[], runs:
   $('#live-reasons').innerHTML = state.liveBlockReasons
     .map((reason) => `<li>${e(reason)}</li>`)
     .join('');
+  $('#unsubscribe-test-status').textContent = state.settings.unsubscribeVerifiedAt
+    ? `Última validação do descadastro: ${when(state.settings.unsubscribeVerifiedAt)}. O teste não autoriza envios reais.`
+    : 'Descadastro ainda não validado. Clique em Testar descadastro após configurar a chave no Render.';
   const form = $<HTMLFormElement>('#operation-form');
   const set = (name: string, value: string) =>
     ((form.elements.namedItem(name) as HTMLInputElement).value = value);
@@ -176,6 +179,21 @@ export function initOperations(
         () => api('/deliveries/reconcile', 'POST'),
         'Reconciliação concluída. Nenhuma mensagem foi reenviada.',
       ),
+  );
+  $('#unsubscribe-test').addEventListener(
+    'click',
+    () =>
+      void action(async () => {
+        $('#unsubscribe-test-status').textContent =
+          'Verificando a página pública e o bloqueio de um endereço fictício…';
+        try {
+          return await api('/operations/unsubscribe-test', 'POST');
+        } catch (error) {
+          $('#unsubscribe-test-status').textContent =
+            'Teste não concluído. Confira a mensagem de erro acima.';
+          throw error;
+        }
+      }, 'Descadastro verificado: a página pública registrou o bloqueio fictício no banco. Nenhum e-mail foi enviado e o envio real continua sujeito à autorização.'),
   );
   $('#revoke').addEventListener(
     'click',
