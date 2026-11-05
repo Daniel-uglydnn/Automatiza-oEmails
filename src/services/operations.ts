@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import type { Config } from '../config.js';
 import { AppError } from '../domain/errors.js';
 import type { Repository } from '../domain/models.js';
-import { operationsSchema, type Operations } from '../domain/operations.js';
+import { jurisdictionSchema, operationsSchema, type Operations } from '../domain/operations.js';
 import { unsubscribeToken } from '../domain/unsubscribe.js';
 import type { GmailConnection } from './oauth.js';
 import { activationReasons } from './compliance.js';
@@ -41,6 +41,38 @@ export class OperationsService {
           400,
           'Relatórios por e-mail só podem ser enviados ao próprio remetente comercial validado.',
         );
+      await this.repository.putRecord('operations', 'default', settings);
+      return settings;
+    });
+  }
+  async reviewJurisdiction(input: unknown): Promise<Operations> {
+    const { confirmed: _confirmed, ...review } = jurisdictionSchema
+      .omit({ reviewedAt: true })
+      .extend({ confirmed: z.literal(true) })
+      .strict()
+      .parse(input);
+    return this.changeJurisdictions((previous) => [
+      ...previous.filter((rule) => rule.country !== review.country),
+      { ...review, reviewedAt: new Date().toISOString() },
+    ]);
+  }
+  async removeJurisdiction(country: unknown): Promise<Operations> {
+    const code = jurisdictionSchema.shape.country.parse(country);
+    return this.changeJurisdictions((previous) => previous.filter((rule) => rule.country !== code));
+  }
+  private async changeJurisdictions(
+    change: (previous: Operations['jurisdictions']) => Operations['jurisdictions'],
+  ): Promise<Operations> {
+    return this.repository.withLock(async () => {
+      const previous = await this.get();
+      const settings = operationsSchema.parse({
+        ...previous,
+        jurisdictions: change(previous.jurisdictions),
+      });
+      if (JSON.stringify(previous.jurisdictions) !== JSON.stringify(settings.jurisdictions)) {
+        settings.authorizedAt = null;
+        settings.unsubscribeVerifiedAt = null;
+      }
       await this.repository.putRecord('operations', 'default', settings);
       return settings;
     });

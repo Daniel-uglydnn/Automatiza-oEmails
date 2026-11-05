@@ -8,27 +8,23 @@ export const businessSchema = z
     postalAddress: z.string().trim().min(15).max(500),
   })
   .strict();
+export const jurisdictionSchema = z
+  .object({
+    country: z
+      .string()
+      .regex(/^[A-Z]{2}$/)
+      .refine((c) => c !== 'BR'),
+    legalBasis: z.string().trim().min(15).max(2000),
+    reviewedAt: z.iso.datetime(),
+    evidenceUrl: sourceUrlSchema,
+  })
+  .strict();
 export const operationsSchema = z
   .object({
     paused: z.boolean().default(false),
     useAI: z.boolean().default(true),
     business: businessSchema.nullable().default(null),
-    jurisdictions: z
-      .array(
-        z
-          .object({
-            country: z
-              .string()
-              .regex(/^[A-Z]{2}$/)
-              .refine((c) => c !== 'BR'),
-            legalBasis: z.string().trim().min(15).max(2000),
-            reviewedAt: z.iso.datetime(),
-            evidenceUrl: sourceUrlSchema,
-          })
-          .strict(),
-      )
-      .max(100)
-      .default([]),
+    jurisdictions: z.array(jurisdictionSchema).max(100).default([]),
     authorizedAt: z.iso.datetime().nullable().default(null),
     unsubscribeVerifiedAt: z.iso.datetime().nullable().default(null),
     breaker: z.string().max(500).nullable().default(null),

@@ -39,6 +39,16 @@ Use o gerenciador de processos do provedor para reiniciar `node dist/server.js`,
 
 O workflow `.github/workflows/prospect-daily.yml` executa `0 12 * * *`, equivalente a 09:00 em `America/Fortaleza`. O GitHub pode atrasar cron; para horário estrito, use um scheduler do provedor chamando `npm run automate -- --scheduled` com as mesmas variáveis. Use **um scheduler**, embora os locks também protejam contra concorrência.
 
+### Primeiro teste manual, sem ativar a agenda ou enviar e-mails
+
+1. No repositório, abra **Settings → Secrets and variables → Actions → Secrets → New repository secret**. Cadastre `YOUTUBE_API_KEY`, `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` com os mesmos valores já utilizados no Render. A URL do Supabase é a base `https://seu-projeto.supabase.co`, sem `/rest/v1/`. Esses três secrets bastam para testar a descoberta e o banco; não copie segredos para issues, commits ou mensagens de chat.
+2. Abra **Actions → Prospecção diária (dry-run por padrão) → Run workflow**, escolha `main` e mantenha **Simular sem enviar e-mails** marcado. O teste manual funciona com a agenda diária desativada e força a simulação mesmo que as variáveis de envio tenham sido alteradas anteriormente.
+3. Confira o resultado no GitHub e no painel, em **Relatórios de execução**. O relatório de teste deve ter **Enviados 0**. Se não houver leads elegíveis, **Simulados 0** também é válido: consulte os motivos de bloqueio. Se a automação estiver pausada, o relatório informará a pausa.
+
+Esse teste usa uma execução identificada como `manual:...`, sem consumir a execução diária. As simulações continuam respeitando o histórico e a cota global de contatos. Nenhum país ou autorização de envio é cadastrado pelo teste. O workflow lista os nomes dos secrets obrigatórios que estiverem faltando, sem imprimir os valores.
+
+### Configuração da rotina diária
+
 No GitHub, configure Actions secrets:
 
 ```text
@@ -63,7 +73,7 @@ ENABLE_LIVE_SENDS=false
 CONTACT_ALLOWED_HOSTS=        # hosts exatos e opcionais de sites oficiais
 ```
 
-O workflow permanece inativo enquanto `AUTOMATION_ENABLED` não for `true`. Faça uma execução manual em dry-run, confira relatório e cota; autorize envio real só seguindo a etapa específica do guia Google. As regras, pausa e limites vêm do banco e valem tanto no servidor quanto no runner.
+A agenda diária permanece inativa enquanto `AUTOMATION_ENABLED` não for `true`; o teste manual descrito acima funciona sem essa variável. Faça uma execução manual em simulação, confira relatório e cota; autorize envio real só seguindo a etapa específica do guia Google. Desmarcar a simulação no teste manual usa a configuração normal do runner e todas as suas guardas de envio. As regras, pausa e limites vêm do banco e valem tanto no servidor quanto no runner.
 
 Cada dia de Fortaleza tem uma chave de execução durável. Uma execução concluída não é repetida; uma interrompida pode retomar a mesma campanha após o lock expirar, sem reenviar tentativas reservadas. Há concorrência exclusiva no GitHub e lease de execução de 30 minutos no banco. O worker deixa de iniciar novas etapas após cerca de 11 minutos e o workflow tem timeout de 12 minutos. Não inicie outro runner para “furar” um lock.
 

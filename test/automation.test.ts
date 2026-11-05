@@ -42,6 +42,39 @@ test('ciclo diário completo gera relatório real da simulação e é idempotent
   assert.equal((await repository.list()).length, 1);
   assert.equal((await repository.listRecords('runs')).length, 1);
 });
+test('teste manual em simulação não chama Gmail mesmo com envio autorizado e preserva a agenda diária', async (t) => {
+  const f = await liveFixture(t);
+  await f.repository.putRecord('operations', 'default', {
+    ...f.settings,
+    reportEmail: f.settings.business!.email,
+  });
+  let gmailCalls = 0;
+  const noMail = async () => {
+    gmailCalls++;
+    throw new Error('Simulação não deve acessar o Gmail, nem para resumo ou respostas.');
+  };
+  const runner = new AutomationService(
+    f.config,
+    f.service,
+    new DeliveryService(f.config, f.repository, noMail, () => now),
+    new ReplyTracking(f.repository, noMail),
+    new PublicWebsiteContacts([]),
+    () => now,
+    noMail,
+  );
+  const run = await runner.run(false, true);
+  assert.equal(run.status, 'completed');
+  assert.match(run.id, /^manual:/);
+  assert.equal(run.report?.sent, 0);
+  assert.ok(run.report!.simulated > 0);
+  assert.deepEqual(run.report?.errors, []);
+  assert.equal(gmailCalls, 0);
+  assert.equal(f.calls.length, 0);
+  assert.deepEqual(await f.repository.deliveries(), []);
+  assert.equal(await f.repository.getRecord('runs', 'daily:2026-11-04'), null);
+  const settings = operationsSchema.parse(await f.repository.getRecord('operations', 'default'));
+  assert.equal(settings.authorizedAt, f.settings.authorizedAt);
+});
 test('pausa persiste e impede descoberta, retomada produz dados sem reiniciar o projeto', async (t) => {
   const { service, repository } = await fixture(t);
   const config = loadConfig({});

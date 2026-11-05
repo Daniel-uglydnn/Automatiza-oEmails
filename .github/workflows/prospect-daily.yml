@@ -3,6 +3,12 @@ on:
   schedule:
     - cron: '0 12 * * *' # 09:00 America/Fortaleza (UTC-3)
   workflow_dispatch:
+    inputs:
+      simulate:
+        description: 'Simular sem enviar e-mails (mantenha marcado para testar)'
+        type: boolean
+        required: true
+        default: true
 permissions:
   contents: read
 concurrency:
@@ -10,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   discover:
-    if: vars.AUTOMATION_ENABLED == 'true'
+    if: github.event_name == 'workflow_dispatch' || vars.AUTOMATION_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
@@ -30,10 +36,32 @@ jobs:
       UNSUBSCRIBE_SIGNING_KEY: ${{ secrets.UNSUBSCRIBE_SIGNING_KEY }}
       CONTACT_ALLOWED_HOSTS: ${{ vars.CONTACT_ALLOWED_HOSTS }}
     steps:
+      - name: Conferir as chaves de descoberta e banco
+        shell: bash
+        run: |
+          missing=0
+          for name in YOUTUBE_API_KEY SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error title=Configuração pendente::Cadastre o secret ${name} em Settings > Secrets and variables > Actions deste repositório. Copie o valor já utilizado no Render."
+              missing=1
+            fi
+          done
+          if [[ "$missing" == 1 ]]; then
+            exit 1
+          fi
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run automate -- --scheduled
+      - name: Executar a rotina
+        env:
+          MANUAL_SIMULATE: ${{ inputs.simulate }}
+        shell: bash
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == 'workflow_dispatch' && "$MANUAL_SIMULATE" != 'false' ]]; then
+            npm run automate -- --simulate
+          else
+            npm run automate -- --scheduled
+          fi

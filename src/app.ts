@@ -111,6 +111,13 @@ export async function buildApp(
     deliveries: await service.repository.deliveries(),
   }));
   app.put('/api/operations', (request) => modules.operations.update(request.body));
+  app.post('/api/operations/jurisdictions', (request) =>
+    modules.operations.reviewJurisdiction(request.body),
+  );
+  app.delete('/api/operations/jurisdictions/:country', (request) => {
+    const { country } = z.object({ country: z.string() }).parse(request.params);
+    return modules.operations.removeJurisdiction(country);
+  });
   app.post(
     '/api/operations/unsubscribe-test',
     { config: { rateLimit: { max: 3, timeWindow: '1 minute' } } },

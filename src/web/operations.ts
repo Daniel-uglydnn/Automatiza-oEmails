@@ -73,6 +73,14 @@ export function renderOperations(data: OperationData, history: Campaign[], runs:
   $('#unsubscribe-test-status').textContent = state.settings.unsubscribeVerifiedAt
     ? `Última validação do descadastro: ${when(state.settings.unsubscribeVerifiedAt)}. O teste não autoriza envios reais.`
     : 'Descadastro ainda não validado. Clique em Testar descadastro após configurar a chave no Render.';
+  const countryNames = new Intl.DisplayNames(['pt-BR'], { type: 'region' });
+  $('#jurisdiction-list').innerHTML =
+    state.settings.jurisdictions
+      .map(
+        (rule) =>
+          `<article class="panel"><h4>${e(countryNames.of(rule.country) ?? rule.country)} (${e(rule.country)})</h4><p>${e(rule.legalBasis)}</p><p class="muted">Revisão registrada em ${when(rule.reviewedAt)} · <a href="${e(rule.evidenceUrl)}" target="_blank" rel="noopener noreferrer">Consultar fonte</a></p><button type="button" class="secondary remove-jurisdiction" data-country="${e(rule.country)}">Remover país ${e(rule.country)}</button></article>`,
+      )
+      .join('') || '<p class="muted">Nenhum país revisado. O envio real permanece bloqueado.</p>';
   const form = $<HTMLFormElement>('#operation-form');
   const set = (name: string, value: string) =>
     ((form.elements.namedItem(name) as HTMLInputElement).value = value);
@@ -218,6 +226,45 @@ export function initOperations(
         reportEmail: f.has('reportEmail') ? email : null,
       });
     }, 'Configuração salva. Alterações legais ou de identidade exigem nova autorização inicial.');
+  });
+  const jurisdictionForm = $<HTMLFormElement>('#jurisdiction-form');
+  const guidance: Record<string, string> = {
+    US: 'https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business',
+    GB: 'https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/',
+    CA: 'https://ised-isde.canada.ca/site/canada-anti-spam-legislation/en',
+    AU: 'https://www.acma.gov.au/avoiding-sending-spam',
+  };
+  const updateGuidance = () => {
+    const country = (jurisdictionForm.elements.namedItem('country') as HTMLSelectElement).value;
+    const url = guidance[country];
+    $('#jurisdiction-guidance').hidden = !url;
+    $('#jurisdiction-guidance').innerHTML = url
+      ? `<a href="${e(url)}" target="_blank" rel="noopener noreferrer">Consultar orientação oficial para este país</a>. Leia também as regras do Gmail; este formulário registra sua revisão, sem verificar automaticamente a legalidade dos contatos.`
+      : '';
+  };
+  jurisdictionForm.addEventListener('change', updateGuidance);
+  jurisdictionForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const f = new FormData(jurisdictionForm);
+    void action(async () => {
+      await api('/operations/jurisdictions', 'POST', {
+        country: f.get('country'),
+        evidenceUrl: f.get('evidenceUrl'),
+        legalBasis: f.get('legalBasis'),
+        confirmed: f.has('confirmed'),
+      });
+      jurisdictionForm.reset();
+      updateGuidance();
+    }, 'Revisão do país registrada. Teste o descadastro novamente antes da ativação; nenhum envio foi autorizado por esta etapa.');
+  });
+  $('#jurisdiction-list').addEventListener('click', (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>('.remove-jurisdiction');
+    if (button)
+      void action(
+        () =>
+          api(`/operations/jurisdictions/${encodeURIComponent(button.dataset.country!)}`, 'DELETE'),
+        'País removido. A autorização anterior foi revogada.',
+      );
   });
   $('#authorize-form').addEventListener('submit', (event) => {
     event.preventDefault();

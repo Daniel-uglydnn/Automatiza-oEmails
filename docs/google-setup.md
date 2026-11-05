@@ -40,6 +40,10 @@ Antes da ativação, é possível validar o descadastro sem endereço postal e s
 5. No painel, registre a autorização inicial com os três reconhecimentos e o texto `AUTHORIZE_AUTOMATIC_OUTREACH`. O backend valida novamente perfil/scopes e acessibilidade do endpoint HTTPS de descadastro. Só então grava a autorização.
 6. A rotina diária pode enviar propostas individuais elegíveis, sem aprovação manual por mensagem, dentro de 10/dia inicialmente. Não realiza follow-ups.
 
+O painel oferece **Revisão dos países de destino** para registrar cada país sem editar JSON: escolha o país, consulte a orientação oficial disponível, descreva a base e os requisitos aplicáveis aos seus destinatários, informe a fonte HTTPS e confirme a revisão. Não basta disponibilizar um e-mail publicamente para presumir permissão. A data é registrada pelo servidor após a confirmação; nenhum país é liberado por padrão e a aplicação não verifica automaticamente a legalidade do contato. A configuração avançada em JSON permanece disponível para outros países e integrações existentes.
+
+Salve primeiro a identidade e as revisões dos países, depois execute **Testar descadastro** novamente. Registrar, editar ou remover regras de países revoga a autorização anterior e a validação do descadastro, preservando os demais dados comerciais. Registrar uma revisão, por si só, não habilita o envio real.
+
 Alterar identidade/jurisdições revoga a autorização. Pausar interrompe novos envios; uma mensagem já em trânsito não pode ser retirada. Falhas de autenticação, restrição ou resultado incerto abrem o bloqueio operacional e exigem nova validação/autorização. Nunca se repete automaticamente um POST de envio.
 
 ## 5. Recuperação

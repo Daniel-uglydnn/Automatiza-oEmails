@@ -225,14 +225,17 @@
                   required
               /></label>
             </div>
-            <label
-              >Jurisdições autorizadas (JSON)<textarea
-                name="jurisdictions"
-                spellcheck="false"
-                placeholder='[{"country":"US","legalBasis":"Base e requisitos revisados para destinatários comerciais...","reviewedAt":"2026-11-04T12:00:00Z","evidenceUrl":"https://..."}]'
-              >
+            <details>
+              <summary>Configuração avançada de países (JSON)</summary>
+              <label
+                >Jurisdições autorizadas (JSON)<textarea
+                  name="jurisdictions"
+                  spellcheck="false"
+                  placeholder='[{"country":"US","legalBasis":"Base e requisitos revisados para destinatários comerciais...","reviewedAt":"2026-11-04T12:00:00Z","evidenceUrl":"https://..."}]'
+                >
 []</textarea>
-            </label>
+              </label>
+            </details>
             <p class="muted">
               País desconhecido não recebe envio real. A base legal e os requisitos de cada país
               devem ser revisados por você antes da ativação. Alterar identidade ou jurisdições
@@ -248,6 +251,57 @@
             >
             <button class="secondary">Salvar configuração operacional</button>
           </form>
+          <form id="jurisdiction-form">
+            <h3>Revisão dos países de destino</h3>
+            <p class="muted">
+              Registre um país depois de revisar as regras aplicáveis aos seus contatos e os
+              requisitos do Gmail. Um e-mail público, por si só, não libera o envio.
+            </p>
+            <div class="form-grid">
+              <label
+                >País<select name="country" required>
+                  <option value="">Selecione um país</option>
+                  <option value="US">Estados Unidos (US)</option>
+                  <option value="GB">Reino Unido (GB)</option>
+                  <option value="CA">Canadá (CA)</option>
+                  <option value="AU">Austrália (AU)</option>
+                  <option value="NZ">Nova Zelândia (NZ)</option>
+                  <option value="IE">Irlanda (IE)</option>
+                  <option value="IN">Índia (IN)</option>
+                  <option value="ZA">África do Sul (ZA)</option>
+                  <option value="SG">Singapura (SG)</option>
+                </select></label
+              ><label
+                >Fonte pública consultada (HTTPS)<input
+                  name="evidenceUrl"
+                  type="url"
+                  placeholder="https://..."
+                  maxlength="2000"
+                  required
+              /></label>
+            </div>
+            <p id="jurisdiction-guidance" class="muted" hidden></p>
+            <label
+              >Base e requisitos aplicáveis<textarea
+                name="legalBasis"
+                minlength="15"
+                maxlength="2000"
+                placeholder="Explique qual regra permite o contato neste caso e os requisitos que você cumprirá."
+                required
+              ></textarea>
+            </label>
+            <label class="check"
+              ><input name="confirmed" type="checkbox" required /> Revisei a aplicação destas regras
+              aos meus destinatários e os requisitos do Gmail.</label
+            >
+            <button class="secondary">Registrar revisão do país</button>
+            <p class="muted">
+              A data da confirmação será registrada pelo servidor. Alterar os países revoga a
+              autorização anterior e exige novo teste de descadastro. Outros países podem ser
+              cadastrados na configuração avançada acima.
+            </p>
+          </form>
+          <div id="jurisdiction-list" aria-live="polite"></div>
           <form id="authorize-form">
             <h3>Ativação inicial de envios reais</h3>
             <p class="muted">
