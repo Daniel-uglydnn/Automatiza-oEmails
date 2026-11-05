@@ -16,6 +16,14 @@ import { eventSchema, type ErrorEvent } from '../domain/models.js';
 import { deliverySchema, type Delivery } from '../domain/operations.js';
 import { supabaseFailureMessage } from './supabase-errors.js';
 
+// PostgREST retorna timestamptz com offset; o domínio mantém datas UTC terminadas em Z.
+const databaseSuppressionSchema = suppressionSchema.extend({
+  createdAt: z.iso
+    .datetime({ offset: true })
+    .pipe(z.coerce.date())
+    .transform((date) => date.toISOString()),
+});
+
 export class SupabaseRepository implements Repository {
   private readonly client: SupabaseClient;
   constructor(url: string, key: string, client?: SupabaseClient) {
@@ -90,7 +98,7 @@ export class SupabaseRepository implements Repository {
       this.check(error);
       for (const row of data ?? [])
         entries.push(
-          suppressionSchema.parse({
+          databaseSuppressionSchema.parse({
             email: row.email,
             createdAt: row.created_at,
             reason: row.reason,
