@@ -249,8 +249,8 @@ async function load() {
   const operationData = await api<OperationData>('/operations');
   renderOperations(operationData, dashboard.campaigns, await api<Run[]>('/reports'));
   $('#delivery-badge').textContent = operationData.liveBlockReasons.length
-    ? 'DRY-RUN / BLOQUEADO'
-    : 'LIVE AUTORIZADO';
+    ? 'ENVIO REAL BLOQUEADO'
+    : 'ENVIO REAL AUTORIZADO';
   $('#sidebar-mode').textContent = operationData.liveBlockReasons.length
     ? 'Envio real bloqueado'
     : 'Envio real autorizado';
