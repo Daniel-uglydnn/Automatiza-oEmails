@@ -32,7 +32,10 @@ export class AutomationService {
       const id = scheduled ? `daily:${day}` : `manual:${randomUUID()}`;
       const previousValue = await repo.getRecord('runs', id);
       const previous = previousValue ? runSchema.parse(previousValue) : null;
-      if (previous?.status === 'completed') return previous;
+      if (previous?.status === 'completed') {
+        this.logSummary(previous, forceSimulation, true);
+        return previous;
+      }
       const run: Run = previous ?? {
         id,
         day,
@@ -170,18 +173,33 @@ export class AutomationService {
         );
         await repo.withLock(() => repo.putRecord('runs', id, run));
       }
-      console.log(
-        JSON.stringify({
-          event: 'automation.completed',
-          runId: run.id,
-          status: run.status,
-          discovered: run.report.discovered,
-          sent: run.report.sent,
-          simulated: run.report.simulated,
-          errors: errors.length,
-        }),
-      );
+      this.logSummary(run, forceSimulation);
       return run;
     });
+  }
+  private logSummary(run: Run, forceSimulation: boolean, reused = false): void {
+    const report = run.report;
+    console.log(
+      JSON.stringify({
+        event: reused ? 'automation.already_completed' : 'automation.completed',
+        runId: run.id,
+        status: run.status,
+        ...(reused
+          ? { reused: true }
+          : {
+              executionMode: forceSimulation ? 'dry-run' : this.config.DELIVERY_MODE,
+              liveSendsEnabled: this.config.ENABLE_LIVE_SENDS === 'true',
+            }),
+        discovered: report?.discovered ?? 0,
+        qualified: report?.qualified ?? 0,
+        contacts: report?.contacts ?? 0,
+        prepared: report?.prepared ?? 0,
+        sent: report?.sent ?? 0,
+        simulated: report?.simulated ?? 0,
+        blocked: report?.blocked ?? 0,
+        blockReasons: report?.blockReasons ?? {},
+        errors: report?.errors.length ?? 0,
+      }),
+    );
   }
 }

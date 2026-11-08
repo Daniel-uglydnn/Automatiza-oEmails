@@ -317,14 +317,31 @@ async function load() {
     await api<Record<string, { configured?: boolean; active?: boolean }>>('/integrations');
   $('#integration-cards').innerHTML = [
     ['youtube', 'YouTube', 'Descoberta e metadata'],
-    ['openai', 'OpenAI', 'Propostas sob demanda'],
-    ['gmail', 'Gmail', 'Envio real bloqueado'],
+    [
+      'openai',
+      'OpenAI',
+      integrations.openai?.configured ? 'Propostas sob demanda' : 'Propostas pelo modelo padrão',
+    ],
+    [
+      'gmail',
+      'Gmail',
+      operationData.liveBlockReasons.length ? 'Envio real bloqueado' : 'Envio real autorizado',
+    ],
     ['supabase', 'Supabase', 'Histórico persistente'],
   ]
-    .map(
-      ([key, title, description]) =>
-        `<div class="integration"><h3>${title}</h3><span class="pill ${integrations[key!]?.configured ? '' : 'pending'}">${integrations[key!]?.configured ? 'Configurada · não validada' : 'Configuração pendente'}</span><p>${description}</p></div>`,
-    )
+    .map(([key, title, description]) => {
+      const configured = !!integrations[key!]?.configured;
+      const connected = key === 'gmail' && operationData.gmail.connected;
+      const optional = key === 'openai' && !configured;
+      const status = connected
+        ? 'Conta conectada'
+        : configured
+          ? 'Credencial presente'
+          : optional
+            ? 'Opcional · sem IA'
+            : 'Configuração pendente';
+      return `<div class="integration"><h3>${title}</h3><span class="pill ${configured || connected || optional ? '' : 'pending'}">${status}</span><p>${description}</p></div>`;
+    })
     .join('');
 }
 $('#auth-form').addEventListener('submit', (event) => {
@@ -360,6 +377,10 @@ $('#campaign-select').addEventListener('change', (event) => {
 });
 $('#lead-filter').addEventListener('change', renderLeads);
 $('#refresh').addEventListener('click', () => void action(load, 'Histórico atualizado.'));
+$('#refresh-reports').addEventListener(
+  'click',
+  () => void action(load, 'Relatórios atualizados com os dados do servidor.'),
+);
 $('#rules-form').addEventListener('submit', (event) => {
   event.preventDefault();
   const f = new FormData(event.currentTarget as HTMLFormElement);

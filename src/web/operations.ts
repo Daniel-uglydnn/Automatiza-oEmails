@@ -92,6 +92,8 @@ export function renderOperations(data: OperationData, history: Campaign[], runs:
   (form.elements.namedItem('useAI') as HTMLInputElement).checked = state.settings.useAI;
   (form.elements.namedItem('reportEmail') as HTMLInputElement).checked =
     !!state.settings.reportEmail;
+  $('#reports-updated').textContent =
+    `Última consulta ao servidor: ${when(new Date().toISOString())}.`;
   $('#run-reports').innerHTML =
     [...runs]
       .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
@@ -99,7 +101,7 @@ export function renderOperations(data: OperationData, history: Campaign[], runs:
         (run) =>
           `<article class="panel"><h3>${e(run.day)} · ${e(run.status)}</h3><p class="muted">${when(run.startedAt)} · ${e(run.id)}</p>${
             run.report
-              ? `<div class="breakdown"><span>Encontrados ${run.report.discovered}</span><span>Qualificados ${run.report.qualified}</span><span>Minecraft ${run.report.minecraft}</span><span>Roblox ${run.report.roblox}</span><span>Contatos ${run.report.contacts}</span><span>Preparados ${run.report.prepared}</span><span>Enviados ${run.report.sent}</span><span>Simulados ${run.report.simulated}</span><span>Não enviados ${run.report.blocked}</span><span>Respostas ${run.report.replies}</span><span>Positivas ${run.report.positiveReplies}</span><span>Erros ${run.report.errors.length}</span></div><ul class="evidence">${Object.entries(
+              ? `<div class="breakdown"><span>Encontrados ${run.report.discovered}</span><span>Qualificados ${run.report.qualified}</span><span>Minecraft ${run.report.minecraft}</span><span>Roblox ${run.report.roblox}</span><span>Contatos ${run.report.contacts}</span><span>Preparados ${run.report.prepared}</span><span>Enviados ${run.report.sent}</span><span>Simulados ${run.report.simulated}</span><span>Bloqueados na fila ${run.report.blocked}</span><span>Respostas ${run.report.replies}</span><span>Positivas ${run.report.positiveReplies}</span><span>Erros ${run.report.errors.length}</span></div><p class="muted">Encontrados e qualificados referem-se à pesquisa desta execução. Os bloqueios podem incluir canais de pesquisas anteriores e vários motivos para o mesmo canal. Canais qualificados ainda passam pelas verificações de país, histórico e envio.</p><ul class="evidence">${Object.entries(
                   run.report.blockReasons,
                 )
                   .map(([reason, count]) => `<li>${count} · ${e(reason)}</li>`)

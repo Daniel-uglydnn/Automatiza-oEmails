@@ -210,7 +210,7 @@ export async function buildApp(
       active: config.STORAGE_DRIVER === 'supabase',
     },
     unsubscribe: { configured: !!(config.PUBLIC_ORIGIN && config.UNSUBSCRIBE_SIGNING_KEY) },
-    note: 'Presença de configuração não significa credenciais validadas. Nenhum envio real está habilitado.',
+    note: 'Presença de configuração não comprova a validade da credencial. Consulte Operação e autorização para verificar os bloqueios de envio.',
   }));
   app.post(
     '/api/campaigns',

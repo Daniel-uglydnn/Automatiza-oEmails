@@ -48,7 +48,13 @@ export function buildReport(
         title: l.channel.title,
         url: `https://www.youtube.com/channel/${encodeURIComponent(l.channel.id)}`,
         score: l.assessment.score,
-        reason: [...l.assessment.evidence.slice(0, 3), ...l.assessment.reasons].join(' '),
+        reason: [
+          ...new Set([
+            ...l.assessment.evidence.slice(0, 3),
+            ...l.assessment.reasons,
+            ...(blocked[l.channel.id] ?? []),
+          ]),
+        ].join(' '),
       })),
   };
 }
